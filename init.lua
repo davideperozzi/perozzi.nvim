@@ -1,43 +1,3 @@
---[[
-
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-
-Kickstart.nvim is *not* a distribution.
-
-Kickstart.nvim is a template for your own configuration.
-  The goal is that you can read every line of code, top-to-bottom, understand
-  what your configuration is doing, and modify it to suit your needs.
-
-  Once you've done that, you should start exploring, configuring and tinkering to
-  explore Neovim!
-
-  If you don't know anything about Lua, I recommend taking some time to read through
-  a guide. One possible example:
-  - https://learnxinyminutes.com/docs/lua/
-
-
-  And then you can explore or search through `:help lua-guide`
-  - https://neovim.io/doc/user/lua-guide.html
-
-
-Kickstart Guide:
-
-I have left several `:help X` comments throughout the init.lua
-You should run that command and read that help section for more information.
-
-In addition, I have some `NOTE:` items throughout the file.
-These are for you, the reader to help understand what is happening. Feel free to delete
-them once you know what you're doing, but they should serve as a guide for when you
-are first encountering a few different constructs in your nvim config.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now :)
---]]
-
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
@@ -72,6 +32,33 @@ require('lazy').setup({
   -- Git related plugins
   'tpope/vim-fugitive',
   'tpope/vim-rhubarb',
+  'mg979/vim-visual-multi',
+  'tikhomirov/vim-glsl',
+  'mbbill/undotree',
+  'nvim-pack/nvim-spectre',
+  'sigmasd/deno-nvim',
+  'sbdchd/neoformat',
+  'folke/neoconf.nvim',
+  {
+    "ThePrimeagen/harpoon",
+    branch = "harpoon2",
+    dependencies = { "nvim-lua/plenary.nvim" }
+  },
+  {
+    "nvim-tree/nvim-tree.lua",
+    version = "*",
+    lazy = false,
+    dependencies = {
+      "nvim-tree/nvim-web-devicons",
+    },
+    config = function()
+      require("nvim-tree").setup {}
+    end,
+  },
+  {
+    -- amongst your other plugins
+    { 'akinsho/toggleterm.nvim', version = "*", config = true }
+  },
 
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
@@ -124,7 +111,6 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim', opts = {} },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -244,6 +230,9 @@ require('lazy').setup({
   {
     'nvim-telescope/telescope.nvim',
     branch = '0.1.x',
+    config = function()
+      require("telescope").load_extension("live_grep_args")
+    end,
     dependencies = {
       'nvim-lua/plenary.nvim',
       -- Fuzzy Finder Algorithm which requires local dependencies to be built.
@@ -257,6 +246,12 @@ require('lazy').setup({
         cond = function()
           return vim.fn.executable 'make' == 1
         end,
+      },
+      {
+        "nvim-telescope/telescope-live-grep-args.nvim" ,
+        -- This will not install any breaking changes.
+        -- For major updates, this must be adjusted manually.
+        version = "^1.0.0",
       },
     },
   },
@@ -288,6 +283,10 @@ require('lazy').setup({
 -- [[ Setting options ]]
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
+
+
+-- Enabled relative linenumbers
+vim.o.relativenumber = true;
 
 -- Set highlight on search
 vim.o.hlsearch = false
@@ -326,6 +325,9 @@ vim.o.completeopt = 'menuone,noselect'
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
 
+-- [[ Undotree Config ]]
+vim.g.undotree_SplitWidth = 34;
+
 -- [[ Basic Keymaps ]]
 
 -- Keymaps for better default experience
@@ -341,6 +343,9 @@ vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous dia
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
+
+-- [[ Custom Keymaps ]]
+vim.keymap.set('n', '<leader>+', vim.cmd.UndotreeToggle);
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
@@ -507,6 +512,7 @@ vim.defer_fn(function()
   }
 end, 0)
 
+
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
 local on_attach = function(_, bufnr)
@@ -554,24 +560,6 @@ local on_attach = function(_, bufnr)
   end, { desc = 'Format current buffer with LSP' })
 end
 
--- document existing key chains
-require('which-key').register {
-  ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-  ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-  ['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
-  ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
-  ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-  ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-  ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-  ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-}
--- register which-key VISUAL mode
--- required for visual <leader>hs (hunk stage) to work
-require('which-key').register({
-  ['<leader>'] = { name = 'VISUAL <leader>' },
-  ['<leader>h'] = { 'Git [H]unk' },
-}, { mode = 'v' })
-
 -- mason-lspconfig requires that these setup functions are called in this order
 -- before setting up the servers.
 require('mason').setup()
@@ -590,9 +578,10 @@ local servers = {
   -- gopls = {},
   -- pyright = {},
   -- rust_analyzer = {},
-  -- tsserver = {},
+  tsserver = {},
+  denols = {},
   -- html = { filetypes = { 'html', 'twig', 'hbs'} },
-
+  html = {},
   lua_ls = {
     Lua = {
       workspace = { checkThirdParty = false },
@@ -627,6 +616,75 @@ mason_lspconfig.setup_handlers {
     }
   end,
 }
+
+-- [[ Ensure deno and tsserver aren't colliding ]]
+-- require("deno-nvim").setup({
+--   server = {
+--     on_attach = on_attach,
+--     capabilites = capabilities
+--   },
+-- })
+--
+
+local lspconfig = require('lspconfig')
+
+lspconfig.denols.setup({
+  root_dir = function (filename, bufnr)
+    local denoRootDir = lspconfig.util.root_pattern("deno.json", "deno.json")(filename);
+    local tsRootDir = lspconfig.util.root_pattern("package.json")(filename);
+
+    if tsRootDir then
+      return nil
+    end
+
+    return denoRootDir
+  end,
+  init_options = {
+    lint = true,
+    unstable = true,
+    suggest = {
+      imports = {
+        hosts = {
+          ["https://deno.land"] = true,
+          ["https://cdn.nest.land"] = true,
+          ["https://crux.land"] = true,
+        },
+      },
+    },
+  },
+  single_file_support = false,
+  on_attach = on_attach,
+})
+
+lspconfig.tsserver.setup({
+  on_attach = function (client, bufnr)
+    on_attach(client, bufnr);
+    vim.keymap.set('n', '<leader>ro', function()
+      vim.lsp.buf.execute_command({
+        command = "_typescript.organizeImports",
+        arguments = { vim.fn.expand("%:p") }
+      })
+    end, { buffer = bufnr,  remap = false });
+  end,
+  root_dir = function (filename, bufnr)
+    local denoRootDir = lspconfig.util.root_pattern("deno.json", "deno.json")(filename);
+    local tsRootDir = lspconfig.util.root_pattern("package.json")(filename);
+
+    if tsRootDir ~= denoRootDir then
+      return tsRootDir
+    end
+
+    if denoRootDir then
+      -- print('this seems to be a deno project; returning nil so that tsserver does not attach');
+      return nil;
+    -- else
+      -- print('this seems to be a ts project; return root dir based on package.json')
+    end
+
+    return lspconfig.util.root_pattern("package.json")(filename);
+  end,
+  single_file_support = false,
+})
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -679,6 +737,94 @@ cmp.setup {
     { name = 'path' },
   },
 }
+
+-- [[ Configure harpoon2 ]]
+local harpoon = require("harpoon")
+
+-- REQUIRED
+harpoon:setup()
+-- REQUIRED
+
+vim.keymap.set("n", "<leader>h", function() harpoon:list():append() end)
+vim.keymap.set("n", "<leader>e", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+
+vim.keymap.set("n", "<C-H>", function() harpoon:list():select(1) end)
+vim.keymap.set("n", "<C-J>", function() harpoon:list():select(2) end)
+vim.keymap.set("n", "<C-K>", function() harpoon:list():select(4) end)
+vim.keymap.set("n", "<C-L>", function() harpoon:list():select(5) end)
+
+vim.keymap.set("n", "<C-x>", function() harpoon:list():clear() end)
+
+-- Toggle previous & next buffers stored within Harpoon list
+vim.keymap.set("n", "<C-h>", function() harpoon:list():prev() end)
+vim.keymap.set("n", "<C-j>", function() harpoon:list():next() end)
+
+-- basic telescope configuration
+local conf = require("telescope.config").values
+local function toggle_telescope(harpoon_files)
+    local file_paths = {}
+    for _, item in ipairs(harpoon_files.items) do
+        table.insert(file_paths, item.value)
+    end
+
+    require("telescope.pickers").new({}, {
+        prompt_title = "Harpoon",
+        finder = require("telescope.finders").new_table({
+            results = file_paths,
+        }),
+        previewer = conf.file_previewer({}),
+        sorter = conf.generic_sorter({}),
+    }):find()
+end
+
+vim.keymap.set("n", "<C-e>", function() toggle_telescope(harpoon:list()) end,
+    { desc = "Open harpoon window" })
+
+-- [[ Configure nvim tree ]]
+vim.keymap.set("n", "<C-b>", ':NvimTreeToggle<CR><Esc>', {
+  noremap = true
+})
+
+-- [[ Configure togglemap ]]
+require("toggleterm").setup({
+  size = 20,
+  open_mapping = [[<D-s>]],
+  hide_numbers = true,
+  shade_filetypes = {},
+  shade_terminals = true,
+  shading_factor = '2',
+  start_in_insert = true,
+  insert_mappings = true,
+  persist_size = true,
+  direction = 'horizontal', -- 'vertical' | 'horizontal' | 'tab' | 'float',
+  close_on_exit = true,
+  shell = vim.o.shell,
+  auto_scroll = true,
+  float_opts = {
+    border = 'curved', -- 'single' | 'double' | 'shadow' | 'curved' | ... other options supported by win open
+    winblend = 0,
+    highlights = {
+      border = "Normal",
+      background = "Normal"
+    }
+  }
+})
+
+vim.keymap.set("t", "<C-n>", function() require("toggleterm").exec("", 2)  end)
+
+-- [[ Configure nvim-spectre ]]
+vim.keymap.set('n', '<leader>S', '<cmd>lua require("spectre").toggle()<CR>', {
+  desc = "Toggle Spectre"
+})
+vim.keymap.set('n', '<leader>sw', '<cmd>lua require("spectre").open_visual({select_word=true})<CR>', {
+  desc = "Search current word"
+})
+vim.keymap.set('v', '<leader>sw', '<esc><cmd>lua require("spectre").open_visual()<CR>', {
+  desc = "Search current word"
+})
+vim.keymap.set('n', '<leader>sp', '<cmd>lua require("spectre").open_file_search({select_word=true})<CR>', {
+  desc = "Search on current file"
+})
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
