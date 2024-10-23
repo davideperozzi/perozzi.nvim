@@ -1,3 +1,7 @@
+function string.starts(String,Start)
+   return string.sub(String,1,string.len(Start))==Start
+end
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
@@ -39,6 +43,24 @@ require('lazy').setup({
   'sigmasd/deno-nvim',
   'sbdchd/neoformat',
   'folke/neoconf.nvim',
+  {
+    "folke/trouble.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  },
+  {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    build = "cd app && yarn install",
+    init = function()
+      vim.g.mkdp_filetypes = { "markdown" }
+    end,
+    ft = { "markdown" },
+  }, 
   {
     "ThePrimeagen/harpoon",
     branch = "harpoon2",
@@ -630,14 +652,39 @@ local lspconfig = require('lspconfig')
 
 lspconfig.denols.setup({
   root_dir = function (filename, bufnr)
-    local denoRootDir = lspconfig.util.root_pattern("deno.json", "deno.json")(filename);
-    local tsRootDir = lspconfig.util.root_pattern("package.json")(filename);
+    local config_name = '.denols'
+    local config_root = lspconfig.util.root_pattern(config_name)(filename)
 
-    if tsRootDir then
-      return nil
+    if config_root then
+      local settings = {}
+      local config_file = lspconfig.util.path.join(config_root, config_name)
+      local loaded_file, err = loadfile(config_file, "t", settings)
+
+      if loaded_file then
+        loaded_file()
+
+        if settings.excludes then
+          for _,excl in ipairs(settings.excludes) do
+            local excl_path = lspconfig.util.path.join(config_root, excl);
+
+            if string.starts(filename, excl_path) then 
+              return nil
+            end
+          end
+        end
+      else
+        print(err)
+      end
     end
 
-    return denoRootDir
+    -- local denoRootDir = lspconfig.util.root_pattern("deno.json", "deno.json")(filename);
+    -- local tsRootDir = lspconfig.util.root_pattern("package.json")(filename);
+    --
+    -- if tsRootDir then
+    --   return nil
+    -- end
+    --
+    return lspconfig.util.root_pattern("deno.json", "deno.json")(filename)
   end,
   init_options = {
     lint = true,
@@ -667,20 +714,20 @@ lspconfig.tsserver.setup({
     end, { buffer = bufnr,  remap = false });
   end,
   root_dir = function (filename, bufnr)
-    local denoRootDir = lspconfig.util.root_pattern("deno.json", "deno.json")(filename);
-    local tsRootDir = lspconfig.util.root_pattern("package.json")(filename);
-
-    if tsRootDir ~= denoRootDir then
-      return tsRootDir
-    end
-
-    if denoRootDir then
-      -- print('this seems to be a deno project; returning nil so that tsserver does not attach');
-      return nil;
-    -- else
-      -- print('this seems to be a ts project; return root dir based on package.json')
-    end
-
+    -- local denoRootDir = lspconfig.util.root_pattern("deno.json", "deno.json")(filename);
+    -- local tsRootDir = lspconfig.util.root_pattern("package.json")(filename);
+    --
+    -- if tsRootDir ~= denoRootDir then
+    --   return tsRootDir
+    -- end
+    --
+    -- if denoRootDir then
+    --   -- print('this seems to be a deno project; returning nil so that tsserver does not attach');
+    --   return nil;
+    -- -- else
+    --   -- print('this seems to be a ts project; return root dir based on package.json')
+    -- end
+    --
     return lspconfig.util.root_pattern("package.json")(filename);
   end,
   single_file_support = false,
@@ -745,8 +792,8 @@ local harpoon = require("harpoon")
 harpoon:setup()
 -- REQUIRED
 
-vim.keymap.set("n", "<leader>h", function() harpoon:list():append() end)
-vim.keymap.set("n", "<leader>e", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+vim.keymap.set("n", "<leader>h", function() harpoon:list():add() end)
+vim.keymap.set("n", "<leader>g", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
 
 vim.keymap.set("n", "<C-H>", function() harpoon:list():select(1) end)
 vim.keymap.set("n", "<C-J>", function() harpoon:list():select(2) end)
