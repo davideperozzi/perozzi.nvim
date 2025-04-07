@@ -21,7 +21,7 @@ vim.opt.timeoutlen = 300
 vim.opt.splitright = true
 vim.opt.splitbelow = true
 vim.opt.list = true
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.opt.listchars = { tab = '  ', trail = '·', nbsp = '␣' }
 vim.opt.inccommand = 'split'
 vim.opt.cursorline = true
 vim.opt.scrolloff = 10
@@ -34,6 +34,18 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
+vim.keymap.set("n", "gf", function()
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local old_line_count = vim.api.nvim_buf_line_count(0)
+
+  vim.cmd("silent! %!gofmt")
+
+  local new_line_count = vim.api.nvim_buf_line_count(0)
+  local line_diff = new_line_count - old_line_count
+  local new_row = math.max(1, cursor_pos[1] + line_diff)
+
+  vim.api.nvim_win_set_cursor(0, { new_row, cursor_pos[2] })
+end, { noremap = true, silent = true })
 
 -- Auto CMDs
 vim.api.nvim_create_autocmd('TextYankPost', {
@@ -42,6 +54,17 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function()
     vim.highlight.on_yank()
   end,
+})
+
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = "*.go",
+  callback = function()
+    vim.lsp.buf.code_action({
+      context = { only = { "source.organizeImports" }, diagnostics = {} },
+      apply = true
+
+    })
+  end
 })
 
 -- All LSPs
