@@ -12,6 +12,7 @@ return {
       'rust',
       'tsx',
       'javascript',
+      'glsl',
       'typescript',
       'vimdoc',
       'vim',

@@ -34,6 +34,7 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
+vim.keymap.set('n', 'gd', vim.lsp.buf.definition)
 
 -- Auto CMDs
 vim.api.nvim_create_autocmd('TextYankPost', {
@@ -44,11 +45,40 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- All LSPs
-require("lsps")
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(event)
+    local client = vim.lsp.get_client_by_id(event.data.client_id)
+
+    if client:supports_method('textDocument/completion') then
+      vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy', 'popup' }
+      vim.lsp.completion.enable(true, client.id, event.buf, { autotrigger = true })
+      vim.keymap.set('i', '<C-Space>', function()
+        vim.lsp.completion.get()
+      end)
+    end
+  end
+})
 
 -- Include custom config
 require("custom.golang")
+require("custom.glsl")
 
 -- Include lazy.nvim
 require("config.lazy")
+
+-- Init LSPs
+vim.lsp.enable({
+  'lua',
+  'rust',
+  'typescript',
+  'html',
+  'emmet',
+  'go',
+  'svelte'
+})
+
+-- Diagnostics
+vim.diagnostic.config({
+  virtual_text = false,
+  virtual_lines = false
+})
