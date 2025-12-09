@@ -17,15 +17,22 @@ return {
   filetypes = { 'svelte' },
   root_dir = function(bufnr, on_dir)
     local fname = vim.api.nvim_buf_get_name(bufnr)
-    -- Svelte LSP only supports file:// schema. https://github.com/sveltejs/language-tools/issues/2777
-    if vim.uv.fs_stat(fname) ~= nil then
-      local root_markers = { 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb', 'bun.lock', 'deno.lock' }
-      root_markers = vim.fn.has('nvim-0.11.3') == 1 and { root_markers, { '.git' } }
-        or vim.list_extend(root_markers, { '.git' })
-      -- We fallback to the current working directory if no project root is found
-      local project_root = vim.fs.root(bufnr, root_markers) or vim.fn.getcwd()
-      on_dir(project_root)
+    if vim.uv.fs_stat(fname) == nil then return end
+
+    local markers = {
+      'package.json',
+      'svelte.config.js', 'svelte.config.ts',
+      'vite.config.js', 'vite.config.ts', 'vite.config.mjs', 'vite.config.cjs',
+      'tsconfig.json', 'jsconfig.json',
+      'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb', 'bun.lock', 'deno.lock',
+    }
+
+    local root = vim.fs.root(bufnr, markers)
+    if not root then
+      root = vim.fs.root(bufnr, '.git') or vim.fn.getcwd()
     end
+
+    on_dir(root)
   end,
   on_attach = function(client, bufnr)
     -- Workaround to trigger reloading JS/TS files

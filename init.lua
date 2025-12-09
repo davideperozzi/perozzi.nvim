@@ -1,7 +1,6 @@
 -- Default Globals
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
-vim.g.have_nerd_font = false
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.g.have_nerd_font = true
@@ -35,6 +34,10 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
 vim.keymap.set('n', 'gd', vim.lsp.buf.definition)
+vim.keymap.set("n", "gv", function()
+  vim.cmd("vsplit")
+  vim.lsp.buf.definition()
+end, { desc = "LSP: go to definition (vsplit)" })
 
 -- Auto CMDs
 vim.api.nvim_create_autocmd('TextYankPost', {
@@ -45,22 +48,8 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- vim.api.nvim_create_autocmd('LspAttach', {
---   callback = function(event)
---     local client = vim.lsp.get_client_by_id(event.data.client_id)
---
---     if client:supports_method('textDocument/completion') then
---       vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy', 'popup' }
---       vim.lsp.completion.enable(true, client.id, event.buf, { autotrigger = true })
---       vim.keymap.set('i', '<C-Space>', function()
---         vim.lsp.completion.get()
---       end)
---     end
---   end
--- })
-
 -- Include custom config
-require("custom.golang")
+require("custom.gopls")
 require("custom.glsl")
 
 -- Include lazy.nvim
@@ -72,8 +61,10 @@ vim.lsp.enable({
   'rust',
   'typescript',
   'html',
+  'json',
   -- 'emmet',
-  'go',
+  'gopls',
+  -- 'protobuf',
   'svelte'
 })
 

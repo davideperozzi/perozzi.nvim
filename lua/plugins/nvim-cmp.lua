@@ -28,8 +28,8 @@ return  {
           luasnip.lsp_expand(args.body)
         end,
       },
+      preselect = cmp.PreselectMode.None,
       completion = { completeopt = 'menu,menuone,noinsert' },
-
       mapping = cmp.mapping.preset.insert {
         -- ['<CR>'] = cmp.mapping.confirm { select = true },
         -- ['<Tab>'] = cmp.mapping.select_next_item(),

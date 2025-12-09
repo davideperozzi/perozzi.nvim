@@ -2,17 +2,9 @@
 vim.keymap.set("n", "gf", function()
   -- Check if 'gopls' is active
   local bufnr = vim.api.nvim_get_current_buf()
-  local clients = vim.lsp.get_clients({ bufnr = bufnr })
-  local has_gopls = false
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, name = "gopls" })
 
-  for _, client in ipairs(clients) do
-    if client.name == "gopls" then
-      has_gopls = true
-      break
-    end
-  end
-
-  if not has_gopls then
+  if #clients == 0 then
     vim.notify("gopls is not active", vim.log.levels.WARN)
     return
   end
